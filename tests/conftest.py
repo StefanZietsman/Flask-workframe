@@ -6,6 +6,7 @@ from flaskr.db import get_db, init_db
 
 
 class AuthActions(object):
+    """This class automates login and logout for testing."""
     def __init__(self, client):
         self._client = client
 
@@ -21,6 +22,7 @@ class AuthActions(object):
 
 @pytest.fixture
 def auth(client):
+    """Returns an AuthActions object to simplify login/logout in tests."""
     return AuthActions(client)
 
 
@@ -30,6 +32,7 @@ with open(os.path.join(os.path.dirname(__file__), 'data.sql'), 'rb') as f:
 
 @pytest.fixture
 def app():
+    """Create and configure a new app instance for each test."""
     db_fd, db_path = tempfile.mkstemp()
 
     app = create_app({
@@ -43,15 +46,18 @@ def app():
 
     yield app
 
+    # close and remove the temporary database
     os.close(db_fd)
     os.unlink(db_path)
 
 
 @pytest.fixture
 def client(app):
+    """A test client for the app."""
     return app.test_client()
 
 
 @pytest.fixture
 def runner(app):
+    """A test runner for the app's Click commands."""
     return app.test_cli_runner()

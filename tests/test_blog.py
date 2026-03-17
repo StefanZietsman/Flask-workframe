@@ -3,10 +3,13 @@ from flaskr.db import get_db
 
 
 def test_index(client, auth):
+    # test that index shows login and register links when not logged in
     response = client.get('/')
     assert b"Log In" in response.data
     assert b"Register" in response.data
 
+    # test that index shows logout link, post data, and update link when
+    # logged in
     auth.login()
     response = client.get('/')
     assert b'Log Out' in response.data
@@ -22,6 +25,8 @@ def test_index(client, auth):
     '/1/delete',
 ))
 def test_login_required(client, path):
+    # test that create, update, and delete views redirect to login if not
+    # logged in
     response = client.post(path)
     assert response.headers["Location"] == "/auth/login"
 
@@ -46,13 +51,16 @@ def test_author_required(app, client, auth):
     '/2/delete',
 ))
 def test_exists_required(client, auth, path):
+    # test that update and delete return 404 if post doesn't exist
     auth.login()
     assert client.post(path).status_code == 404
 
 
 def test_create(client, auth, app):
     auth.login()
+    # test that create page renders
     assert client.get('/create').status_code == 200
+    # test that creating a post redirects to index and inserts into database
     client.post('/create', data={'title': 'created', 'body': ''})
 
     with app.app_context():
@@ -63,7 +71,9 @@ def test_create(client, auth, app):
 
 def test_update(client, auth, app):
     auth.login()
+    # test that update page renders
     assert client.get('/1/update').status_code == 200
+    # test that updating a post redirects to index and updates database
     client.post('/1/update', data={'title': 'updated', 'body': ''})
 
     with app.app_context():
@@ -77,6 +87,7 @@ def test_update(client, auth, app):
     '/1/update',
 ))
 def test_create_update_validate(client, auth, path):
+    # test that title is required for create and update
     auth.login()
     response = client.post(path, data={'title': '', 'body': ''})
     assert b'Title is required.' in response.data
@@ -87,6 +98,7 @@ def test_delete(client, auth, app):
     response = client.post('/1/delete')
     assert response.headers["Location"] == "/"
 
+    # test that the post was deleted from the database
     with app.app_context():
         db = get_db()
         post = db.execute('SELECT * FROM post WHERE id = 1').fetchone()

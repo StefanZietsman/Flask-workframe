@@ -4,12 +4,15 @@ from flaskr.db import get_db
 
 
 def test_register(client, app):
+    # test that viewing the page renders without template errors
     assert client.get('/auth/register').status_code == 200
+    # test that successful registration redirects to the login page
     response = client.post(
         '/auth/register', data={'username': 'a', 'password': 'a'}
     )
     assert response.headers["Location"] == "/auth/login"
 
+    # test that the user was inserted into the database
     with app.app_context():
         assert get_db().execute(
             "SELECT * FROM user WHERE username = 'a'",
@@ -30,10 +33,14 @@ def test_register_validate_input(client, username, password, message):
 
 
 def test_login(client, auth):
+    # test that viewing the page renders without template errors
     assert client.get('/auth/login').status_code == 200
+    # test that successful login redirects to the index page
     response = auth.login()
     assert response.headers["Location"] == "/"
 
+    # login request set the user_id in the session
+    # check that the user is loaded from the session
     with client:
         client.get('/')
         assert session['user_id'] == 1
